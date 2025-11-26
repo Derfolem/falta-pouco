@@ -127,11 +127,11 @@ END:VCALENDAR`;
         </div>
       </div>
 
-      {/* Cronômetro Regressivo Interativo */}
+      {/* Cronômetro Regressivo */}
       <div className="container mx-auto px-4 -mt-32 relative z-20 mb-16">
         <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
           <h2 className="font-serif text-4xl md:text-5xl text-center mb-4 bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent font-bold">
-            Contagem Regressiva Interativa
+            Contagem Regressiva
           </h2>
           <p className="text-center text-gray-600 mb-8 text-lg">
             ✨ Cada segundo nos aproxima deste momento especial ✨
