@@ -15,10 +15,35 @@ export default function WeddingSite() {
     segundos: 0
   });
   const [pixCopiado, setPixCopiado] = useState(false);
+  const [mostrarStats, setMostrarStats] = useState(false);
+  const [estatisticas, setEstatisticas] = useState({
+    cliquesPixCopiar: 0,
+    cliquesPresentear: 0
+  });
 
   const dataEvento1 = new Date('2025-12-04T13:00:00'); // Restaurante
   const dataEvento2 = new Date('2025-12-06T13:00:00'); // Residência
   const chavePix = '106.733.327-48';
+
+  // Verificar se deve mostrar estatísticas
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('stats') === 'true') {
+      setMostrarStats(true);
+    }
+
+    // Carregar estatísticas do localStorage
+    const stats = localStorage.getItem('wedding_stats');
+    if (stats) {
+      setEstatisticas(JSON.parse(stats));
+    }
+  }, []);
+
+  // Salvar estatísticas no localStorage
+  const salvarEstatisticas = (novasStats) => {
+    localStorage.setItem('wedding_stats', JSON.stringify(novasStats));
+    setEstatisticas(novasStats);
+  };
 
   // Cronômetro 1 - Restaurante
   useEffect(() => {
@@ -136,6 +161,13 @@ END:VCALENDAR`;
       await navigator.clipboard.writeText(chavePix);
       setPixCopiado(true);
       setTimeout(() => setPixCopiado(false), 3000);
+      
+      // Incrementar contador
+      const novasStats = {
+        ...estatisticas,
+        cliquesPixCopiar: estatisticas.cliquesPixCopiar + 1
+      };
+      salvarEstatisticas(novasStats);
     } catch (err) {
       console.error('Erro ao copiar:', err);
     }
@@ -147,6 +179,13 @@ END:VCALENDAR`;
     if (secao) {
       secao.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
+    
+    // Incrementar contador
+    const novasStats = {
+      ...estatisticas,
+      cliquesPresentear: estatisticas.cliquesPresentear + 1
+    };
+    salvarEstatisticas(novasStats);
   };
 
   const formatarNumero = (num) => String(num).padStart(2, '0');
@@ -435,6 +474,62 @@ END:VCALENDAR`;
           </p>
         </div>
       </div>
+
+      {/* Painel de Estatísticas (Oculto - apenas com ?stats=true) */}
+      {mostrarStats && (
+        <div className="container mx-auto px-4 mb-16">
+          <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl shadow-2xl p-8 border-2 border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="font-serif text-2xl text-white flex items-center gap-2">
+                📊 Painel Administrativo
+              </h3>
+              <button
+                onClick={() => {
+                  if (window.confirm('Deseja zerar todas as estatísticas?')) {
+                    salvarEstatisticas({ cliquesPixCopiar: 0, cliquesPresentear: 0 });
+                  }
+                }}
+                className="bg-red-600 hover:bg-red-700 text-white text-sm py-2 px-4 rounded-lg transition-all duration-300"
+              >
+                Zerar Contadores
+              </button>
+            </div>
+            
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-gradient-to-br from-purple-600 to-purple-700 rounded-xl p-6 text-white">
+                <div className="flex items-center gap-3 mb-3">
+                  <Copy className="w-6 h-6" />
+                  <span className="font-semibold text-lg">Copiar PIX</span>
+                </div>
+                <div className="font-mono text-5xl font-bold mb-2">
+                  {estatisticas.cliquesPixCopiar}
+                </div>
+                <div className="text-sm opacity-90">cliques no botão "Copiar Chave PIX"</div>
+              </div>
+
+              <div className="bg-gradient-to-br from-pink-600 to-rose-700 rounded-xl p-6 text-white">
+                <div className="flex items-center gap-3 mb-3">
+                  <Gift className="w-6 h-6" />
+                  <span className="font-semibold text-lg">Presentear o Casal</span>
+                </div>
+                <div className="font-mono text-5xl font-bold mb-2">
+                  {estatisticas.cliquesPresentear}
+                </div>
+                <div className="text-sm opacity-90">cliques nos botões "Quer presentear?"</div>
+              </div>
+            </div>
+
+            <div className="mt-6 p-4 bg-gray-700 rounded-lg">
+              <p className="text-gray-300 text-sm text-center">
+                💡 <strong>Dica:</strong> Para acessar este painel, adicione <code className="bg-gray-600 px-2 py-1 rounded">?stats=true</code> no final da URL
+              </p>
+              <p className="text-gray-400 text-xs text-center mt-2">
+                Exemplo: <code className="bg-gray-600 px-2 py-0.5 rounded">seusite.vercel.app?stats=true</code>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="bg-gradient-to-r from-rose-600 via-purple-600 to-pink-600 text-white py-8">
