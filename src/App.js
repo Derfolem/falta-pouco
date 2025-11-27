@@ -2,7 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Gift, MapPin, Clock, Heart, Copy, Check } from 'lucide-react';
 
 export default function WeddingSite() {
-  const [tempoRestante, setTempoRestante] = useState({
+  const [tempoRestante1, setTempoRestante1] = useState({
+    dias: 0,
+    horas: 0,
+    minutos: 0,
+    segundos: 0
+  });
+  const [tempoRestante2, setTempoRestante2] = useState({
     dias: 0,
     horas: 0,
     minutos: 0,
@@ -10,14 +16,15 @@ export default function WeddingSite() {
   });
   const [pixCopiado, setPixCopiado] = useState(false);
 
-  const dataEvento = new Date('2025-12-04T13:00:00');
+  const dataEvento1 = new Date('2025-12-04T13:00:00'); // Restaurante
+  const dataEvento2 = new Date('2025-12-06T13:00:00'); // Residência
   const chavePix = '106.733.327-48';
 
-  // Cronômetro regressivo
+  // Cronômetro 1 - Restaurante
   useEffect(() => {
     const calcularTempo = () => {
       const agora = new Date();
-      const diferenca = dataEvento - agora;
+      const diferenca = dataEvento1 - agora;
 
       if (diferenca > 0) {
         const dias = Math.floor(diferenca / (1000 * 60 * 60 * 24));
@@ -25,10 +32,33 @@ export default function WeddingSite() {
         const minutos = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60));
         const segundos = Math.floor((diferenca % (1000 * 60)) / 1000);
 
-        setTempoRestante({ dias, horas, minutos, segundos });
+        setTempoRestante1({ dias, horas, minutos, segundos });
       } else {
-        // Se a data já passou, mostrar zeros
-        setTempoRestante({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
+        setTempoRestante1({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
+      }
+    };
+
+    calcularTempo();
+    const intervalo = setInterval(calcularTempo, 1000);
+
+    return () => clearInterval(intervalo);
+  }, []);
+
+  // Cronômetro 2 - Residência
+  useEffect(() => {
+    const calcularTempo = () => {
+      const agora = new Date();
+      const diferenca = dataEvento2 - agora;
+
+      if (diferenca > 0) {
+        const dias = Math.floor(diferenca / (1000 * 60 * 60 * 24));
+        const horas = Math.floor((diferenca % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const minutos = Math.floor((diferenca % (1000 * 60 * 60)) / (1000 * 60));
+        const segundos = Math.floor((diferenca % (1000 * 60)) / 1000);
+
+        setTempoRestante2({ dias, horas, minutos, segundos });
+      } else {
+        setTempoRestante2({ dias: 0, horas: 0, minutos: 0, segundos: 0 });
       }
     };
 
@@ -39,30 +69,54 @@ export default function WeddingSite() {
   }, []);
 
   // Adicionar ao Google Calendar
-  const adicionarGoogleCalendar = () => {
-    const titulo = encodeURIComponent('Casamento Fred e Domi');
-    const detalhes = encodeURIComponent('Celebração do casamento de Fred e Domi');
-    const local = encodeURIComponent('Restaurante Casa Bounasera');
-    const dataInicio = '20251104T130000';
-    const dataFim = '20251104T160000';
-    
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${titulo}&details=${detalhes}&location=${local}&dates=${dataInicio}/${dataFim}`;
+  const adicionarGoogleCalendar = (evento) => {
+    const configs = evento === 1 ? {
+      titulo: 'Casamento Fred e Domi - Restaurante',
+      detalhes: 'Almoço de celebração no Restaurante Casa Bounasera',
+      local: 'Restaurante Casa Bounasera',
+      dataInicio: '20251204T130000',
+      dataFim: '20251204T160000'
+    } : {
+      titulo: 'Casamento Fred e Domi - Nossa Casa',
+      detalhes: 'Celebração na residência do casal',
+      local: 'Travessa Alaíde, 3 - Jacutinga, Mesquita - RJ',
+      dataInicio: '20251206T130000',
+      dataFim: '20251206T180000'
+    };
+
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(configs.titulo)}&details=${encodeURIComponent(configs.detalhes)}&location=${encodeURIComponent(configs.local)}&dates=${configs.dataInicio}/${configs.dataFim}`;
     window.open(url, '_blank');
   };
 
   // Baixar arquivo .ics
-  const baixarICS = () => {
+  const baixarICS = (evento) => {
+    const configs = evento === 1 ? {
+      data: '20251204T130000',
+      dataFim: '20251204T160000',
+      titulo: 'Casamento Fred e Domi - Restaurante',
+      descricao: 'Almoço de celebração no Restaurante Casa Bounasera',
+      local: 'Restaurante Casa Bounasera',
+      arquivo: 'casamento-restaurante.ics'
+    } : {
+      data: '20251206T130000',
+      dataFim: '20251206T180000',
+      titulo: 'Casamento Fred e Domi - Nossa Casa',
+      descricao: 'Celebração na residência do casal',
+      local: 'Travessa Alaíde, 3 - Jacutinga, Mesquita - RJ',
+      arquivo: 'casamento-residencia.ics'
+    };
+
     const ics = `BEGIN:VCALENDAR
 VERSION:2.0
 PRODID:-//Fred e Domi Wedding//PT-BR
 BEGIN:VEVENT
 UID:${Date.now()}@wedding
 DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
-DTSTART:20251104T130000
-DTEND:20251104T160000
-SUMMARY:Casamento Fred e Domi
-DESCRIPTION:Celebração do casamento de Fred e Domi
-LOCATION:Restaurante Casa Bounasera
+DTSTART:${configs.data}
+DTEND:${configs.dataFim}
+SUMMARY:${configs.titulo}
+DESCRIPTION:${configs.descricao}
+LOCATION:${configs.local}
 STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR`;
@@ -70,7 +124,7 @@ END:VCALENDAR`;
     const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
-    link.download = 'casamento-fred-domi.ics';
+    link.download = configs.arquivo;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -116,7 +170,11 @@ END:VCALENDAR`;
             Fred e Domi
           </h1>
           <p className="text-2xl md:text-3xl mb-6 font-light">Celebrando nosso amor</p>
-          <p className="text-xl md:text-2xl font-mono">04 de Dezembro de 2025 • 13h00</p>
+          <p className="text-xl md:text-2xl font-mono mb-2">04 de Dezembro de 2025 • 13h00</p>
+          <p className="text-lg md:text-xl opacity-90">Restaurante Casa Bounasera</p>
+          <div className="my-4 opacity-75">✨</div>
+          <p className="text-xl md:text-2xl font-mono mb-2">06 de Dezembro de 2025 • 13h00</p>
+          <p className="text-lg md:text-xl opacity-90">Nossa Residência</p>
         </div>
 
         {/* Indicador de scroll */}
@@ -127,46 +185,96 @@ END:VCALENDAR`;
         </div>
       </div>
 
-      {/* Cronômetro Regressivo */}
+      {/* Cronômetros Regressivos */}
       <div className="container mx-auto px-4 -mt-32 relative z-20 mb-16">
-        <div className="bg-white rounded-3xl shadow-2xl p-8 md:p-12">
-          <h2 className="font-serif text-4xl md:text-5xl text-center mb-4 bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent font-bold">
-            Contagem Regressiva
-          </h2>
-          <p className="text-center text-gray-600 mb-8 text-lg">
-            ✨ Cada segundo nos aproxima deste momento especial ✨
-          </p>
-          
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 mb-8">
-            {[
-              { label: 'Dias', valor: tempoRestante.dias },
-              { label: 'Horas', valor: tempoRestante.horas },
-              { label: 'Minutos', valor: tempoRestante.minutos },
-              { label: 'Segundos', valor: tempoRestante.segundos }
-            ].map((item, idx) => (
-              <div 
-                key={item.label}
-                className={`bg-gradient-to-br from-rose-500 to-purple-600 rounded-2xl p-6 text-white text-center shadow-lg hover:scale-105 transition-all duration-300 ${
-                  idx === 3 ? 'animate-pulse' : ''
-                }`}
-              >
-                <div className="font-mono text-5xl md:text-6xl font-bold mb-2">
-                  {formatarNumero(item.valor)}
-                </div>
-                <div className="text-sm md:text-base uppercase tracking-wider opacity-90">
-                  {item.label}
-                </div>
+        <div className="grid md:grid-cols-2 gap-6">
+          {/* Cronômetro 1 - Restaurante */}
+          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-rose-100 to-purple-100 px-4 py-2 rounded-full mb-3">
+                <MapPin className="w-5 h-5 text-rose-600" />
+                <span className="font-semibold text-rose-600">Restaurante</span>
               </div>
-            ))}
-          </div>
+              <h3 className="font-serif text-2xl md:text-3xl bg-gradient-to-r from-rose-600 to-purple-600 bg-clip-text text-transparent font-bold">
+                04 de Dezembro
+              </h3>
+              <p className="text-gray-600 text-sm md:text-base">Casa Bounasera • 13h00</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {[
+                { label: 'Dias', valor: tempoRestante1.dias },
+                { label: 'Horas', valor: tempoRestante1.horas },
+                { label: 'Minutos', valor: tempoRestante1.minutos },
+                { label: 'Segundos', valor: tempoRestante1.segundos }
+              ].map((item, idx) => (
+                <div 
+                  key={item.label}
+                  className={`bg-gradient-to-br from-rose-500 to-purple-600 rounded-xl p-4 text-white text-center shadow-lg hover:scale-105 transition-all duration-300 ${
+                    idx === 3 ? 'animate-pulse' : ''
+                  }`}
+                >
+                  <div className="font-mono text-3xl md:text-4xl font-bold mb-1">
+                    {formatarNumero(item.valor)}
+                  </div>
+                  <div className="text-xs uppercase tracking-wider opacity-90">
+                    {item.label}
+                  </div>
+                </div>
+              ))}
+            </div>
 
-          <div className="text-center mt-8">
             <button
               onClick={irParaPresentes}
-              className="bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:via-rose-600 hover:to-purple-600 text-white py-4 px-8 rounded-full font-semibold text-lg shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-3 mx-auto animate-pulse hover:animate-none"
+              className="w-full bg-gradient-to-r from-pink-500 via-rose-500 to-purple-500 hover:from-pink-600 hover:via-rose-600 hover:to-purple-600 text-white py-3 px-6 rounded-full font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
             >
-              <Gift className="w-6 h-6 animate-bounce" />
-              Quer presentear o casal? Clique aqui
+              <Gift className="w-5 h-5" />
+              Quero presentear o casal! Clique aqui
+            </button>
+          </div>
+
+          {/* Cronômetro 2 - Residência */}
+          <div className="bg-white rounded-3xl shadow-2xl p-6 md:p-8">
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-purple-100 to-pink-100 px-4 py-2 rounded-full mb-3">
+                <MapPin className="w-5 h-5 text-purple-600" />
+                <span className="font-semibold text-purple-600">Nossa Casa</span>
+              </div>
+              <h3 className="font-serif text-2xl md:text-3xl bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent font-bold">
+                06 de Dezembro
+              </h3>
+              <p className="text-gray-600 text-sm md:text-base">Nossa Residência • 13h00</p>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-3 mb-6">
+              {[
+                { label: 'Dias', valor: tempoRestante2.dias },
+                { label: 'Horas', valor: tempoRestante2.horas },
+                { label: 'Minutos', valor: tempoRestante2.minutos },
+                { label: 'Segundos', valor: tempoRestante2.segundos }
+              ].map((item, idx) => (
+                <div 
+                  key={item.label}
+                  className={`bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl p-4 text-white text-center shadow-lg hover:scale-105 transition-all duration-300 ${
+                    idx === 3 ? 'animate-pulse' : ''
+                  }`}
+                >
+                  <div className="font-mono text-3xl md:text-4xl font-bold mb-1">
+                    {formatarNumero(item.valor)}
+                  </div>
+                  <div className="text-xs uppercase tracking-wider opacity-90">
+                    {item.label}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <button
+              onClick={irParaPresentes}
+              className="w-full bg-gradient-to-r from-purple-500 via-pink-500 to-rose-500 hover:from-purple-600 hover:via-pink-600 hover:to-rose-600 text-white py-3 px-6 rounded-full font-semibold shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+            >
+              <Gift className="w-5 h-5" />
+              Quero presentear o casal! Clique aqui
             </button>
           </div>
         </div>
@@ -175,48 +283,97 @@ END:VCALENDAR`;
       {/* Layout de Duas Colunas */}
       <div className="container mx-auto px-4 mb-16">
         <div className="grid md:grid-cols-2 gap-8">
-          {/* Coluna Esquerda - Nosso Grande Dia */}
+          {/* Coluna Esquerda - Nossos Grandes Dias */}
           <div className="bg-white rounded-2xl shadow-lg p-8">
             <h3 className="font-serif text-3xl mb-6 text-rose-600 flex items-center gap-3">
               <Heart className="w-8 h-8" />
-              Nosso Grande Dia
+              Nossos Grandes Dias
             </h3>
             
-            <div className="space-y-4 mb-6">
-              <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl">
-                <Clock className="w-6 h-6 text-rose-600 flex-shrink-0 mt-1" />
-                <div>
-                  <div className="font-semibold text-gray-800">Data e Horário</div>
-                  <div className="text-gray-600">04 de Novembro de 2025</div>
-                  <div className="text-gray-600">13h00 (Almoço)</div>
+            {/* Evento 1 - Restaurante */}
+            <div className="mb-8 pb-8 border-b border-gray-200">
+              <h4 className="font-semibold text-xl text-gray-800 mb-4 flex items-center gap-2">
+                <span className="bg-rose-100 text-rose-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">1</span>
+                Restaurante Casa Bounasera
+              </h4>
+              <div className="space-y-3 mb-4">
+                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl">
+                  <Clock className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-gray-800 text-sm">Data e Horário</div>
+                    <div className="text-gray-600 text-sm">04 de Dezembro de 2025 • 13h00</div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                  <MapPin className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-gray-800 text-sm">Local</div>
+                    <div className="text-gray-600 text-sm">Restaurante Casa Bounasera</div>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex items-start gap-4 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
-                <MapPin className="w-6 h-6 text-purple-600 flex-shrink-0 mt-1" />
-                <div>
-                  <div className="font-semibold text-gray-800">Local do Evento</div>
-                  <div className="text-gray-600">Restaurante Casa Bounasera</div>
-                </div>
+              <div className="space-y-2">
+                <button
+                  onClick={() => adicionarGoogleCalendar(1)}
+                  className="w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white py-2.5 px-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Google Calendar
+                </button>
+
+                <button
+                  onClick={() => baixarICS(1)}
+                  className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white py-2.5 px-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Baixar .ics
+                </button>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <button
-                onClick={adicionarGoogleCalendar}
-                className="w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white py-3 px-6 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <Calendar className="w-5 h-5" />
-                Adicionar ao Google Calendar
-              </button>
+            {/* Evento 2 - Residência */}
+            <div>
+              <h4 className="font-semibold text-xl text-gray-800 mb-4 flex items-center gap-2">
+                <span className="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold">2</span>
+                Nossa Residência
+              </h4>
+              <div className="space-y-3 mb-4">
+                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl">
+                  <Clock className="w-5 h-5 text-rose-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-gray-800 text-sm">Data e Horário</div>
+                    <div className="text-gray-600 text-sm">06 de Dezembro de 2025 • 13h00</div>
+                  </div>
+                </div>
 
-              <button
-                onClick={baixarICS}
-                className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white py-3 px-6 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2"
-              >
-                <Calendar className="w-5 h-5" />
-                Baixar para Agenda (.ics)
-              </button>
+                <div className="flex items-start gap-3 p-3 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl">
+                  <MapPin className="w-5 h-5 text-purple-600 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <div className="font-semibold text-gray-800 text-sm">Local</div>
+                    <div className="text-gray-600 text-sm">Travessa Alaíde, 3<br/>Jacutinga, Mesquita - RJ</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <button
+                  onClick={() => adicionarGoogleCalendar(2)}
+                  className="w-full bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white py-2.5 px-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Google Calendar
+                </button>
+
+                <button
+                  onClick={() => baixarICS(2)}
+                  className="w-full bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white py-2.5 px-4 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+                >
+                  <Calendar className="w-4 h-4" />
+                  Baixar .ics
+                </button>
+              </div>
             </div>
           </div>
 
@@ -282,13 +439,11 @@ END:VCALENDAR`;
       {/* Footer */}
       <footer className="bg-gradient-to-r from-rose-600 via-purple-600 to-pink-600 text-white py-8">
         <div className="container mx-auto px-4 text-center">
-          <p className="text-lg font-semibold mb-2">04 de Novembro de 2025</p>
+          <p className="text-lg font-semibold mb-1">04 e 06 de Dezembro de 2025</p>
+          <p className="text-sm opacity-90 mb-1">Restaurante Casa Bounasera • Nossa Residência</p>
           <p className="text-sm opacity-90">Nosso amor, nossa celebração</p>
         </div>
       </footer>
     </div>
   );
-}
-function App() {
-  return <WeddingSite />;
 }
